@@ -67,3 +67,136 @@ Infrastructure is defined using reusable Terraform modules:
      ├── vpc/
      ├── eks/
      └── db/
+     
+
+    VPC module: Networking (subnets, routing)
+    EKS module: Kubernetes cluster and node groups
+    DB module: RDS PostgreSQL and subnet groups
+
+
+### Remote State 
+    State stored in S3 bucket
+    State locking via DynamoDB
+
+
+## Environment Separation
+
+Separate folders for:
+
+    dev
+    prod
+
+Each environment has:
+
+    Independent configuration
+    Separate state files
+
+### Multi-Region Handling
+    Terraform uses provider aliases for multiple regions
+    Separate state maintained per region to avoid conflicts
+    Cross-region replication configured for database
+
+### Dependency Handling
+    Outputs from modules reused across components
+    Explicit dependencies ensure correct resource creation order
+
+### Challenges
+    State drift handled via refresh and locking
+    Synchronization across regions adds complexity
+    Managing dependencies across modules
+
+## (c) Docker & Image Strategy
+
+### Dockerfile Optimization
+    Multi-stage builds used to reduce image size
+    Alpine-based images for minimal footprint
+    
+### Backend:
+
+    Installs only production dependencies
+    Runs lightweight Node.js server
+    
+### Frontend:
+    Served using Nginx
+    Static content only
+
+### Security
+    Containers run as non-root users
+    Minimal packages included
+    No credentials stored inside images
+    
+### Image Versioning & Storage
+    Images tagged using Git commit SHA
+    Stored in container registry (e.g., DockerHub or ECR)
+    
+### CI/CD Integration
+    Images built automatically on code push
+    Tagged and pushed to registry
+    Used by Kubernetes during deployment
+
+## (d) Kubernetes Deployment
+
+### Zero-Downtime Deployment
+    RollingUpdate strategy used
+    Readiness probes ensure only healthy pods receive traffic
+    Old pods removed only after new pods are ready
+    
+### Autoscaling
+    Horizontal Pod Autoscaler (HPA) based on CPU usage
+    Minimum replicas: 2
+    Scales automatically during high load
+    
+### Secret Management
+    Credentials stored in Kubernetes Secrets
+    Injected as environment variables
+    No sensitive data in code or YAML
+
+### Inter-Service Communication
+    Services use ClusterIP for internal communication
+    DNS-based service discovery inside cluster
+    Frontend exposed via Ingress
+
+### GitOps with Argo CD
+    Kubernetes manifests stored in GitHub
+    Argo CD continuously monitors repository
+
+## (e) CI/CD Pipeline Design
+
+### Pipeline Overview
+
+CI/CD implemented using:
+
+    GitHub Actions (CI)
+    Argo CD (CD)
+
+### Trigger Mechanism
+    Pipeline runs on push to main branch
+    
+### Failure Handling
+    If build fails → deployment stops
+    Logs generated for debugging
+    Stable version retained
+
+## (f) Failure & Failover Scenario
+### Scenario
+
+    Primary region becomes unavailable.
+
+### Traffic Failover
+    Managed using Amazon Route 53
+    Health checks detect failure
+    DNS redirects traffic to secondary region
+    
+### Data Consistency
+    RDS cross-region replication used
+    Secondary region maintains near real-time copy
+    Replica promoted to primary during failure
+    
+## Repository Structure
+
+    fintech-devops/
+     ├── backend/
+     ├── frontend/
+     ├── k8s/
+     ├── terraform/
+     └── .github/workflows/
