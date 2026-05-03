@@ -200,7 +200,8 @@ CI/CD implemented using:
      ├── k8s/
      ├── terraform/
      └── .github/workflows/
+     
 
 
-     <img width="277" height="786" alt="image" src="https://github.com/user-attachments/assets/60c32289-44a3-4683-bbef-87d3eee39097" />
+<img width="277" height="786" alt="image" src="https://github.com/user-attachments/assets/60c32289-44a3-4683-bbef-87d3eee39097" />
 
